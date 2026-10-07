@@ -1,0 +1,281 @@
+{
+ "_template": {
+  "description": "Wan 2.2 I2V A14B (GGUF) for BIG motion: the high-noise stage runs WITHOUT the lightx2v 4-step LoRA (real CFG hi_cfg) because that LoRA damps motion; the low-noise stage uses lightx2v at lo_lx with CFG 1. steps = total steps, split = switch high->low. Start image = sprite on a flat key colour, nearest-upscaled to width x height.",
+  "params": {
+   "start": {
+    "default": "",
+    "help": "@start.png (sprite on key colour, width x height)"
+   },
+   "prompt": {
+    "default": "Pixel art video game sprite animation of a cute white bunny, side view facing right. The character from the start image runs fast like a classic 2D platformer run cycle. Static camera, no zoom. Plain solid bright green background (green screen)."
+   },
+   "seed": {
+    "default": 3
+   },
+   "width": {
+    "default": 384
+   },
+   "height": {
+    "default": 384
+   },
+   "length": {
+    "default": 33
+   },
+   "steps": {
+    "default": 8
+   },
+   "split": {
+    "default": 4
+   },
+   "hi_cfg": {
+    "default": 3.5
+   },
+   "lo_cfg": {
+    "default": 1.0
+   },
+   "lo_lx": {
+    "default": 1.0
+   },
+   "shift": {
+    "default": 5.0
+   },
+   "sampler": {
+    "default": "euler"
+   },
+   "prefix": {
+    "default": "pvs/wan22"
+   },
+   "wan_high": {
+    "default": "Wan2.2-I2V-A14B-HighNoise-Q4_K_M.gguf",
+    "help": "models/unet (QuantStack/Wan2.2-I2V-A14B-GGUF)"
+   },
+   "wan_low": {
+    "default": "Wan2.2-I2V-A14B-LowNoise-Q4_K_M.gguf",
+    "help": "models/unet"
+   },
+   "lightx2v_low": {
+    "default": "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+    "help": "models/loras (Comfy-Org/Wan_2.2_ComfyUI_Repackaged)"
+   },
+   "text_encoder": {
+    "default": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+    "help": "models/text_encoders"
+   },
+   "vae": {
+    "default": "wan_2.1_vae.safetensors",
+    "help": "models/vae"
+   }
+  }
+ },
+ "17": {
+  "class_type": "UnetLoaderGGUF",
+  "inputs": {
+   "unet_name": "{{wan_high}}"
+  }
+ },
+ "18": {
+  "class_type": "ModelComputeDtype",
+  "inputs": {
+   "model": [
+    "17",
+    0
+   ],
+   "dtype": "bf16"
+  }
+ },
+ "20": {
+  "class_type": "ModelSamplingSD3",
+  "inputs": {
+   "model": [
+    "18",
+    0
+   ],
+   "shift": "{{shift}}"
+  }
+ },
+ "21": {
+  "class_type": "UnetLoaderGGUF",
+  "inputs": {
+   "unet_name": "{{wan_low}}"
+  }
+ },
+ "22": {
+  "class_type": "ModelComputeDtype",
+  "inputs": {
+   "model": [
+    "21",
+    0
+   ],
+   "dtype": "bf16"
+  }
+ },
+ "23": {
+  "class_type": "LoraLoaderModelOnly",
+  "inputs": {
+   "model": [
+    "22",
+    0
+   ],
+   "lora_name": "{{lightx2v_low}}",
+   "strength_model": "{{lo_lx}}"
+  }
+ },
+ "24": {
+  "class_type": "ModelSamplingSD3",
+  "inputs": {
+   "model": [
+    "23",
+    0
+   ],
+   "shift": "{{shift}}"
+  }
+ },
+ "25": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "{{text_encoder}}",
+   "type": "wan",
+   "device": "default"
+  }
+ },
+ "26": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "{{vae}}"
+  }
+ },
+ "27": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "25",
+    0
+   ],
+   "text": "{{prompt}}"
+  }
+ },
+ "28": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "25",
+    0
+   ],
+   "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走, camera movement, zoom, pan"
+  }
+ },
+ "16": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "{{start}}"
+  }
+ },
+ "29": {
+  "class_type": "WanImageToVideo",
+  "inputs": {
+   "positive": [
+    "27",
+    0
+   ],
+   "negative": [
+    "28",
+    0
+   ],
+   "vae": [
+    "26",
+    0
+   ],
+   "start_image": [
+    "16",
+    0
+   ],
+   "width": "{{width}}",
+   "height": "{{height}}",
+   "length": "{{length}}",
+   "batch_size": 1
+  }
+ },
+ "30": {
+  "class_type": "KSamplerAdvanced",
+  "inputs": {
+   "model": [
+    "20",
+    0
+   ],
+   "positive": [
+    "29",
+    0
+   ],
+   "negative": [
+    "29",
+    1
+   ],
+   "latent_image": [
+    "29",
+    2
+   ],
+   "add_noise": "enable",
+   "noise_seed": "{{seed}}",
+   "steps": "{{steps}}",
+   "cfg": "{{hi_cfg}}",
+   "sampler_name": "{{sampler}}",
+   "scheduler": "simple",
+   "start_at_step": 0,
+   "end_at_step": "{{split}}",
+   "return_with_leftover_noise": "enable"
+  }
+ },
+ "31": {
+  "class_type": "KSamplerAdvanced",
+  "inputs": {
+   "model": [
+    "24",
+    0
+   ],
+   "positive": [
+    "29",
+    0
+   ],
+   "negative": [
+    "29",
+    1
+   ],
+   "latent_image": [
+    "30",
+    0
+   ],
+   "add_noise": "disable",
+   "noise_seed": 0,
+   "steps": "{{steps}}",
+   "cfg": "{{lo_cfg}}",
+   "sampler_name": "{{sampler}}",
+   "scheduler": "simple",
+   "start_at_step": "{{split}}",
+   "end_at_step": 10000,
+   "return_with_leftover_noise": "disable"
+  }
+ },
+ "32": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "31",
+    0
+   ],
+   "vae": [
+    "26",
+    0
+   ]
+  }
+ },
+ "33": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "32",
+    0
+   ],
+   "filename_prefix": "{{prefix}}"
+  }
+ }
+}

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pixel-video-sprites"
+version = "0.1.0"
+description = "Pixel-perfect sprite animations from a video model: Wan 2.2 motion + Krea 2 pixel re-draw, driven through ComfyUI"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "pillow>=10.0"]
+authors = [{ name = "Daybun" }]
+keywords = ["pixel art", "sprite", "animation", "comfyui", "wan", "krea"]
+
+[project.scripts]
+pvs = "pixel_video_sprites.cli:main"
+
+[tool.setuptools]
+packages = ["pixel_video_sprites"]
+
+[tool.setuptools.package-data]
+pixel_video_sprites = ["workflows/*.json"]

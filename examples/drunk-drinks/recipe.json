@@ -1,0 +1,31 @@
+{
+ "action": "stays sitting on the ground, slowly lifts the green glass bottle to his mouth, takes a long drink, lowers the bottle again and sways sleepily",
+ "description": "a scruffy drunk old man with a red nose, stubble, brown coat and blue trousers, sitting on the ground",
+ "mode": "once",
+ "key": "magenta",
+ "grid": 36,
+ "picked": [
+  2,
+  5,
+  7,
+  10,
+  13,
+  16,
+  18,
+  21,
+  24,
+  27,
+  29,
+  32
+ ],
+ "cycle": {
+  "period": null,
+  "last_visible": 32
+ },
+ "side": 384,
+ "steps": 8,
+ "cell": 32,
+ "lora": 32,
+ "margin": 2,
+ "hold": true
+}

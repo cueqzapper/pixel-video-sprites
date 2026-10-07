@@ -1,0 +1,32 @@
+{
+ "action": "suddenly bursts apart in a big cartoon explosion: the green shell cracks into flying pieces, a bright orange and yellow fireball with sparks, then grey smoke clears and the beetle is gone",
+ "description": "a round shiny green beetle with six short black legs and two antennae",
+ "mode": "once",
+ "key": "magenta",
+ "grid": 48,
+ "picked": [
+  2,
+  4,
+  5,
+  7,
+  9,
+  11,
+  12,
+  14,
+  16,
+  18,
+  19,
+  21
+ ],
+ "cycle": {
+  "period": null,
+  "last_visible": 21
+ },
+ "side": 512,
+ "steps": 10,
+ "cell": 32,
+ "fast": false,
+ "margin": 8,
+ "hold": false,
+ "denoise": 0.3
+}

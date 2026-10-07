@@ -1,0 +1,27 @@
+{
+ "action": "spreads its big brown wings wide, jumps up and takes off, then flies with strong wing flaps, the wings beating far up and far down in a steady flight cycle",
+ "description": "a scruffy vulture with dark brown feathers, a bald pink head and neck and a hooked yellow beak",
+ "mode": "loop",
+ "key": "blue",
+ "grid": 44,
+ "picked": [
+  17,
+  18,
+  19,
+  20,
+  21,
+  22
+ ],
+ "cycle": {
+  "period": 6,
+  "loop_diff": 0.0215,
+  "start": 17
+ },
+ "side": 512,
+ "steps": 10,
+ "cell": 32,
+ "fast": false,
+ "margin": 6,
+ "hold": false,
+ "length": 49
+}

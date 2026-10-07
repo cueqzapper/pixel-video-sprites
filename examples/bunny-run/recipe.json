@@ -1,0 +1,32 @@
+{
+ "action": "runs fast like a classic 2D platformer run cycle: big energetic strides, one leg kicks far forward while the other pushes far back, ears and scarf bounce, the body bobs up and down, running in place",
+ "description": "a cute white chibi bunny with long ears with pink insides and a hot pink scarf",
+ "mode": "loop",
+ "key": "green",
+ "grid": 32,
+ "picked": [
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  17,
+  18,
+  19,
+  20,
+  21
+ ],
+ "cycle": {
+  "period": 13,
+  "loop_diff": 0.012,
+  "start": 9
+ },
+ "side": 512,
+ "steps": 10,
+ "cell": 32,
+ "fast": false,
+ "margin": 0,
+ "hold": true
+}

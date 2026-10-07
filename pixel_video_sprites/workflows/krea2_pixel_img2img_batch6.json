@@ -1,0 +1,591 @@
+{
+ "_template": {
+  "description": "Krea 2 Turbo + k2-pixel LoRA img2img as 6 parallel sampler branches in ONE job (model loads once; the Krea 2 sampler does not take a latent batch). MiniMax H3 Pixel Art Refiner collapses all 6 frames to grid_w x grid_h with ONE shared palette (palette image = sprite colours + key colour). Only the native-size frames are saved. Fill unused slots with the last frame.",
+  "params": {
+   "img0": {
+    "default": "",
+    "help": "@frame.png (grid x cell px, subject on key colour)"
+   },
+   "img1": {
+    "default": "",
+    "help": "@frame.png (grid x cell px, subject on key colour)"
+   },
+   "img2": {
+    "default": "",
+    "help": "@frame.png (grid x cell px, subject on key colour)"
+   },
+   "img3": {
+    "default": "",
+    "help": "@frame.png (grid x cell px, subject on key colour)"
+   },
+   "img4": {
+    "default": "",
+    "help": "@frame.png (grid x cell px, subject on key colour)"
+   },
+   "img5": {
+    "default": "",
+    "help": "@frame.png (grid x cell px, subject on key colour)"
+   },
+   "palette": {
+    "default": "",
+    "help": "@palette.png (one row: sprite colours + key colour)"
+   },
+   "prompt": {
+    "default": ""
+   },
+   "seed": {
+    "default": 1
+   },
+   "denoise": {
+    "default": 0.4
+   },
+   "lora": {
+    "default": "k2-pixel32.safetensors"
+   },
+   "lora_strength": {
+    "default": 1.0
+   },
+   "steps": {
+    "default": 8
+   },
+   "scheduler": {
+    "default": "normal"
+   },
+   "grid_w": {
+    "default": 32
+   },
+   "grid_h": {
+    "default": 32
+   },
+   "colors": {
+    "default": 24
+   },
+   "prefix": {
+    "default": "pvs/krea2batch"
+   },
+   "krea_model": {
+    "default": "krea2_turbo_fp8_scaled.safetensors",
+    "help": "models/diffusion_models (Comfy-Org/Krea-2)"
+   },
+   "text_encoder": {
+    "default": "qwen3vl_4b_fp8_scaled.safetensors",
+    "help": "models/text_encoders (Comfy-Org/Krea-2)"
+   },
+   "vae": {
+    "default": "qwen_image_vae.safetensors",
+    "help": "models/vae (Comfy-Org/Krea-2)"
+   }
+  }
+ },
+ "1": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "{{krea_model}}",
+   "weight_dtype": "default"
+  }
+ },
+ "2": {
+  "class_type": "LoraLoaderModelOnly",
+  "inputs": {
+   "model": [
+    "1",
+    0
+   ],
+   "lora_name": "{{lora}}",
+   "strength_model": "{{lora_strength}}"
+  }
+ },
+ "3": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "{{text_encoder}}",
+   "type": "krea2",
+   "device": "default"
+  }
+ },
+ "4": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "{{vae}}"
+  }
+ },
+ "5": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "3",
+    0
+   ],
+   "text": "{{prompt}}"
+  }
+ },
+ "6": {
+  "class_type": "ConditioningZeroOut",
+  "inputs": {
+   "conditioning": [
+    "5",
+    0
+   ]
+  }
+ },
+ "L0": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "{{img0}}"
+  }
+ },
+ "L1": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "{{img1}}"
+  }
+ },
+ "L2": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "{{img2}}"
+  }
+ },
+ "L3": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "{{img3}}"
+  }
+ },
+ "L4": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "{{img4}}"
+  }
+ },
+ "L5": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "{{img5}}"
+  }
+ },
+ "P": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "{{palette}}"
+  }
+ },
+ "11": {
+  "class_type": "MiniMaxH3PixelArtRefiner",
+  "inputs": {
+   "image": [
+    "B5",
+    0
+   ],
+   "width": "{{grid_w}}",
+   "height": "{{grid_h}}",
+   "colors": "{{colors}}",
+   "color_reduction_first": true,
+   "scale_to_original": false,
+   "allow_uneven_grid": true,
+   "shared_palette": true,
+   "auto_offset": true,
+   "align_palette_lightness": true,
+   "preserve_generated_background": true,
+   "palette_image": [
+    "P",
+    0
+   ],
+   "x_offset": 0.0,
+   "y_offset": 0.0
+  }
+ },
+ "12": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "11",
+    0
+   ],
+   "filename_prefix": "{{prefix}}_native"
+  }
+ },
+ "E0": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "L0",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "S0": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "2",
+    0
+   ],
+   "positive": [
+    "5",
+    0
+   ],
+   "negative": [
+    "6",
+    0
+   ],
+   "latent_image": [
+    "E0",
+    0
+   ],
+   "seed": "{{seed}}",
+   "steps": "{{steps}}",
+   "cfg": 1.0,
+   "sampler_name": "euler",
+   "scheduler": "{{scheduler}}",
+   "denoise": "{{denoise}}"
+  }
+ },
+ "D0": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "S0",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "E1": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "L1",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "S1": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "2",
+    0
+   ],
+   "positive": [
+    "5",
+    0
+   ],
+   "negative": [
+    "6",
+    0
+   ],
+   "latent_image": [
+    "E1",
+    0
+   ],
+   "seed": "{{seed}}",
+   "steps": "{{steps}}",
+   "cfg": 1.0,
+   "sampler_name": "euler",
+   "scheduler": "{{scheduler}}",
+   "denoise": "{{denoise}}"
+  }
+ },
+ "D1": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "S1",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "E2": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "L2",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "S2": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "2",
+    0
+   ],
+   "positive": [
+    "5",
+    0
+   ],
+   "negative": [
+    "6",
+    0
+   ],
+   "latent_image": [
+    "E2",
+    0
+   ],
+   "seed": "{{seed}}",
+   "steps": "{{steps}}",
+   "cfg": 1.0,
+   "sampler_name": "euler",
+   "scheduler": "{{scheduler}}",
+   "denoise": "{{denoise}}"
+  }
+ },
+ "D2": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "S2",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "E3": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "L3",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "S3": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "2",
+    0
+   ],
+   "positive": [
+    "5",
+    0
+   ],
+   "negative": [
+    "6",
+    0
+   ],
+   "latent_image": [
+    "E3",
+    0
+   ],
+   "seed": "{{seed}}",
+   "steps": "{{steps}}",
+   "cfg": 1.0,
+   "sampler_name": "euler",
+   "scheduler": "{{scheduler}}",
+   "denoise": "{{denoise}}"
+  }
+ },
+ "D3": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "S3",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "E4": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "L4",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "S4": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "2",
+    0
+   ],
+   "positive": [
+    "5",
+    0
+   ],
+   "negative": [
+    "6",
+    0
+   ],
+   "latent_image": [
+    "E4",
+    0
+   ],
+   "seed": "{{seed}}",
+   "steps": "{{steps}}",
+   "cfg": 1.0,
+   "sampler_name": "euler",
+   "scheduler": "{{scheduler}}",
+   "denoise": "{{denoise}}"
+  }
+ },
+ "D4": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "S4",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "E5": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "L5",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "S5": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "2",
+    0
+   ],
+   "positive": [
+    "5",
+    0
+   ],
+   "negative": [
+    "6",
+    0
+   ],
+   "latent_image": [
+    "E5",
+    0
+   ],
+   "seed": "{{seed}}",
+   "steps": "{{steps}}",
+   "cfg": 1.0,
+   "sampler_name": "euler",
+   "scheduler": "{{scheduler}}",
+   "denoise": "{{denoise}}"
+  }
+ },
+ "D5": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "S5",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "B1": {
+  "class_type": "ImageBatch",
+  "inputs": {
+   "image1": [
+    "D0",
+    0
+   ],
+   "image2": [
+    "D1",
+    0
+   ]
+  }
+ },
+ "B2": {
+  "class_type": "ImageBatch",
+  "inputs": {
+   "image1": [
+    "B1",
+    0
+   ],
+   "image2": [
+    "D2",
+    0
+   ]
+  }
+ },
+ "B3": {
+  "class_type": "ImageBatch",
+  "inputs": {
+   "image1": [
+    "B2",
+    0
+   ],
+   "image2": [
+    "D3",
+    0
+   ]
+  }
+ },
+ "B4": {
+  "class_type": "ImageBatch",
+  "inputs": {
+   "image1": [
+    "B3",
+    0
+   ],
+   "image2": [
+    "D4",
+    0
+   ]
+  }
+ },
+ "B5": {
+  "class_type": "ImageBatch",
+  "inputs": {
+   "image1": [
+    "B4",
+    0
+   ],
+   "image2": [
+    "D5",
+    0
+   ]
+  }
+ }
+}
