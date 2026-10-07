@@ -1,0 +1,58 @@
+{
+ "action": "gets angry, turns dark grey and shakes, then shoots a big bright yellow zigzag lightning bolt straight down with a white flash",
+ "description": "a grumpy grey storm cloud with an angry face, rosy cheeks and a small yellow lightning bolt hanging below",
+ "view": "front view",
+ "mode": "once",
+ "frames": 8,
+ "margin": 6,
+ "hold": false,
+ "seed": 5,
+ "length": 33,
+ "side": 384,
+ "steps": 8,
+ "canvas": 24,
+ "cell": 32,
+ "denoise": 0.4,
+ "key": "green",
+ "grid": 36,
+ "picked": [
+  4,
+  10,
+  14,
+  18,
+  21,
+  23,
+  25,
+  27
+ ],
+ "cycle": {
+  "period": null,
+  "last_visible": 32
+ },
+ "game": {
+  "title": "KNUDDEL-ALARM (Daybun)",
+  "animation": "vid_cloud",
+  "clip": "attack",
+  "ticks_per_frame": 6,
+  "postprocess": "frames aligned to one foot point and cropped to their common hull (engine export)"
+ },
+ "palette_from": "base",
+ "extra_colors": [
+  [
+   96,
+   102,
+   128
+  ],
+  [
+   128,
+   136,
+   160
+  ],
+  [
+   255,
+   250,
+   200
+  ]
+ ],
+ "picked_by_hand": true
+}

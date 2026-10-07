@@ -1,10 +1,10 @@
 """Command line: `pvs animate …`, `pvs check`.
 
   pvs check --url http://127.0.0.1:8188
-  pvs animate examples/bunny-run/input.png \
-      --action "runs fast like a classic 2D platformer run cycle: big energetic strides ..." \
-      --description "a cute white chibi bunny with long ears with pink insides and a hot pink scarf" \
-      --mode loop --out out/bunny-run
+  pvs animate examples/knuddel-bear-walk/input.png --view "side view facing left" \
+      --action "stomps forward grumpily, swinging his short arms, the body bobbing heavily with each step ..." \
+      --description "a small grumpy pink gummy bear with a dark plum outline and an angry frown" \
+      --mode loop --frames 6 --stabilize scale --out out/bear-walk
 """
 from __future__ import annotations
 
@@ -107,6 +107,11 @@ def main(argv=None):
     a.add_argument("--steps", type=int, default=8, help="Wan steps (half on the high-noise stage)")
     a.add_argument("--cell", type=int, choices=[32, 16], default=32, help="Krea cell size: 32 = best look, 16 = faster")
     a.add_argument("--fps", type=int, default=10)
+    a.add_argument("--canvas", type=int, help="canvas edge in sprite pixels (default 32 up to 30 px, else 64; 80 for big bosses)")
+    a.add_argument("--stabilize", choices=["pos", "scale"], help="calm foot line/centre (pos) and height (scale) before the re-draw")
+    a.add_argument("--pick", help="own choice of video frames, e.g. 1,2,3,5,7,9,10,11 (default: automatic)")
+    a.add_argument("--palette", choices=["base", "video"], help="palette from the sprite (base) or the video (default: base, video with --no-hold)")
+    a.add_argument("--extra-colors", help='extra palette colours for --palette base, e.g. "96,102,128;128,136,160"')
     a.add_argument("--wan", action="append", metavar="KEY=VALUE", help="override a Wan template parameter (e.g. wan_high=my.gguf)")
     a.add_argument("--krea", action="append", metavar="KEY=VALUE", help="override a Krea template parameter")
     a.add_argument("--quiet", action="store_true")
@@ -115,7 +120,10 @@ def main(argv=None):
         sys.exit(check(args.url))
     meta = animate(args.sprite, args.action, args.description, args.out, mode=args.mode, n=args.frames, seed=args.seed,
                    length=args.length, denoise=args.denoise, view=args.view, margin=args.margin, hold=not args.no_hold,
-                   side=args.side, steps=args.steps, cell=args.cell, fps=args.fps, client=comfy.ComfyClient(args.url),
+                   side=args.side, steps=args.steps, cell=args.cell, fps=args.fps, canvas=args.canvas,
+                   stabilize=args.stabilize, picked=[int(x) for x in args.pick.split(",")] if args.pick else None,
+                   palette=args.palette, extra_colors=[[int(v) for v in c.split(",")] for c in args.extra_colors.split(";")]
+                   if args.extra_colors else None, client=comfy.ComfyClient(args.url),
                    wan_params=_kv(args.wan), krea_params=_kv(args.krea), verbose=not args.quiet)
     print(json.dumps({k: meta[k] for k in ("spritesheet", "gif", "picked", "cycle", "timing")}, indent=1, ensure_ascii=False))
 

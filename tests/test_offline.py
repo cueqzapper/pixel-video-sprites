@@ -57,6 +57,28 @@ def test_pick_once_trims_empty_tail():
     assert info["last_visible"] == 20 and idx[-1] == 20 and len(idx) == 12
 
 
+def test_stabilize_aligns_feet_and_height(tmp=None):
+    import tempfile
+    from PIL import Image
+    d = Path(tmp or tempfile.mkdtemp())
+    paths = []
+    for k, (y1, h) in enumerate([(300, 120), (280, 150), (320, 100)]):  # foot line and height drift like a zooming hop
+        a = np.zeros((384, 384, 3), np.uint8)
+        a[...] = (0, 200, 0)
+        a[y1 - h:y1, 150 + 10 * k:200 + 10 * k] = (255, 255, 255)
+        p = d / f"v_{k}.png"
+        Image.fromarray(a).save(p)
+        paths.append(p)
+    out = P.stabilize_frames(paths, d / "stab", scale=True, target_h=120)
+    feet, heights, centres = [], [], []
+    for q in out:
+        ys, xs = np.where(P.key_mask(np.asarray(Image.open(q).convert("RGB"))))
+        feet.append(ys.max())
+        heights.append(ys.max() - ys.min() + 1)
+        centres.append(xs.mean())
+    assert max(feet) - min(feet) <= 2 and max(heights) - min(heights) <= 3 and max(centres) - min(centres) <= 2
+
+
 def test_templates_are_valid_graphs():
     for t in (P.WAN, P.KREA_BATCH):
         tpl, defaults = comfy.load_template(t)

@@ -1,13 +1,26 @@
 # pixel-video-sprites
 
 **Pixelgenaue Sprite-Animationen aus einem Video-Modell.** Ein natives Sprite und ein Satz Text rein, eine fertige
-32-px-Animation raus – rennen, fliegen, trinken, explodieren –, gerechnet auf deinem eigenen ComfyUI.
+Pixel-Animation raus – gehen, verwandeln, angreifen, schwanken –, gerechnet auf deinem eigenen ComfyUI.
 
-| Hase rennt | Betrunkener trinkt | Geier fliegt | Käfer explodiert |
+Beispiele aus unserem Jump’n’Run **KNUDDEL-ALARM**, erzeugt aus den vorhandenen Spiel-Sprites und als Spiel-Assets abgelegt:
+
+| Wackelpudding wird geheilt | Gewitterwolke wird geheilt | Grummelbär stapft | Gewitterwolke blitzt | Boss schwankt (64×80) |
+|---|---|---|---|---|
+| ![](examples/knuddel-jelly-cure/preview.gif) | ![](examples/knuddel-cloud-cure/preview.gif) | ![](examples/knuddel-bear-walk/preview.gif) | ![](examples/knuddel-cloud-attack/preview.gif) | ![](examples/knuddel-baron-dizzy/preview.gif) |
+| einmalig, 8 Frames | einmalig, 6 Frames | Schleife, 6 Frames | einmalig, 8 Frames | Schleife, 6 Frames |
+
+Jeder Beispiel-Ordner enthält das Eingabe-Sprite (`input.png`), die Frames so, wie sie im Spiel liegen (`frames/`, auf einen
+Fusspunkt ausgerichtet), ein `spritesheet.png`, das `preview.gif` und die genauen Einstellungen (`recipe.json`). Nichts davon
+ist von Hand nachgebessert.
+
+Frühe Prüf-Animationen (die ersten Tests der Kette):
+
+| Betrunkener trinkt | Geier fliegt | Käfer explodiert | Hase rennt (schwach) |
 |---|---|---|---|
-| ![](examples/bunny-run/preview.gif) | ![](examples/drunk-drinks/preview.gif) | ![](examples/vulture-flies/preview.gif) | ![](examples/beetle-explodes/preview.gif) |
+| ![](examples/drunk-drinks/preview.gif) | ![](examples/vulture-flies/preview.gif) | ![](examples/beetle-explodes/preview.gif) | ![](examples/bunny-run/preview.gif) |
 
-Alle vier sind vollautomatisch entstanden, jeweils aus einem Standbild (`examples/*/input.png`) und einer Aktion als Text.
+Der Hase bleibt nur als frühes Experiment drin: Schon sein Startbild war schwach (Ohren und Schal kaum lesbar).
 
 [English: README.md](README.md)
 
@@ -75,17 +88,17 @@ Steht dein ComfyUI hinter einem Proxy mit Anmeldung, setz `COMFY_AUTH` auf `Bear
 ## Benutzung
 
 ```bash
-pvs animate examples/bunny-run/input.png \
-  --action "runs fast like a classic 2D platformer run cycle: big energetic strides, one leg kicks far forward while the other pushes far back, ears and scarf bounce, the body bobs up and down, running in place" \
-  --description "a cute white chibi bunny with long ears with pink insides and a hot pink scarf" \
-  --mode loop --out out/bunny-run
+pvs animate examples/knuddel-bear-walk/input.png --view "side view facing left" \
+  --action "stomps forward grumpily, swinging his short arms, the body bobbing heavily with each step, walking on the spot like on a treadmill" \
+  --description "a small grumpy pink gummy bear with a dark plum outline and an angry frown" \
+  --mode loop --frames 6 --stabilize scale --out out/bear-walk
 ```
 
-Ergebnis in `out/bunny-run/`: `frames/frame_XX.png` (native Grösse, transparent), `spritesheet.png`, `preview.gif`,
+Ergebnis in `out/bear-walk/`: `frames/frame_XX.png` (native Grösse, transparent), `spritesheet.png`, `preview.gif`,
 `meta.json` (gewählte Video-Frames, Zyklus, Einstellungen, Zeiten) sowie die Zwischenstände `start.png`, `video/`,
 `canvas/`, `krea/`. Aktion und Beschreibung am besten auf Englisch schreiben.
 
-Die Befehle für die anderen drei Beispiele stehen in der [englischen README](README.md#usage); die genauen Einstellungen
+Die Befehle für die anderen Beispiele stehen in der [englischen README](README.md#usage); die genauen Einstellungen
 jedes gezeigten Ergebnisses in `examples/*/recipe.json`. Ergebnisse hängen vom Seed ab (`--seed`): ein paar Varianten
 machen und eine auswählen.
 
@@ -101,7 +114,11 @@ machen und eine auswählen.
 | `--length` | 33 | Video-Frames (4n+1, z. B. 33 oder 49) |
 | `--side` / `--steps` | 384 / 8 | Video-Auflösung und Wan-Schritte (die Hälfte auf der High-Noise-Stufe mit CFG 3,5) |
 | `--cell 32\|16` | 32 | Krea-Zellgrösse: 32 = bester Look; 16 = k2-pixel64 auf einem Viertel der Pixel, schneller, aber Krümel bei Effekten |
-| `--view` | `side view facing right` | muss zum Sprite passen |
+| `--view` | `side view facing right` | muss zum Sprite passen (`side view facing left`, `front view`, …) |
+| `--canvas` | 32 / 64 | Leinwand in Sprite-Pixeln (32 bis 30 px, sonst 64); `80` mit `--cell 16` für einen 64×80-Boss |
+| `--stabilize pos\|scale` | aus | gewählte Video-Frames vor dem Nachzeichnen ruhigstellen: Fusslinie und Körpermitte (`pos`), dazu Höhe zurück auf die Sprite-Höhe (`scale`, gegen Wan-Zoom beim Hüpfen) |
+| `--pick 1,2,5,…` | automatisch | eigene Auswahl der Video-Frames, z. B. nur der Teil eines einmaligen Clips, in dem die Aktion passiert |
+| `--palette base\|video`, `--extra-colors "r,g,b;…"` | base (video bei `--no-hold`) | Herkunft der Palette; Zusatzfarben für `base`, z. B. dunklere Grautöne für eine Wolke, die sich verdunkelt |
 | `--wan KEY=WERT`, `--krea KEY=WERT` | | beliebigen Vorlagen-Parameter überschreiben (Modell-Dateinamen, `shift`, `hi_cfg`, `lora_dir`, …) |
 
 ## Workflows
@@ -123,7 +140,7 @@ Werte ersetzen.
 
 ## Grenzen
 
-* Native Sprites bis 64 px; die Ansicht (z. B. Seitenansicht) muss im Eingabebild schon stimmen.
+* Abgestimmt auf native Sprites bis 64 px; grössere (ein 64×80-Boss) gehen mit `--canvas 80 --cell 16`. Die Ansicht (z. B. Seitenansicht) muss im Eingabebild schon stimmen.
 * Die Figur genau beschreiben (Farben, Kleidung), sonst „korrigiert“ Krea sie.
 * Nicht jeder Seed passt – ein paar Varianten machen und eine auswählen.
 * Kleine Schwankungen bleiben (Ohrform, dunkle Klumpen bei schnellem Flügelschlag).

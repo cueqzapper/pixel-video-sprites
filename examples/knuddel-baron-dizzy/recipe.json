@@ -1,0 +1,39 @@
+{
+ "action": "is dizzy and wobbles like a roly-poly toy, leaning far to the left and then far to the right, the top hat tilting, stars circling around his head",
+ "description": "Baron von Grummelkraut, a big muscular broccoli boss with a dark green crown of florets, a black top hat with a pink band, a golden monocle and a grumpy frown",
+ "view": "front view",
+ "mode": "loop",
+ "frames": 6,
+ "margin": 0,
+ "hold": true,
+ "seed": 5,
+ "length": 33,
+ "side": 480,
+ "steps": 8,
+ "canvas": 80,
+ "cell": 16,
+ "denoise": 0.4,
+ "key": "blue",
+ "grid": 80,
+ "picked": [
+  15,
+  17,
+  19,
+  21,
+  22,
+  24
+ ],
+ "cycle": {
+  "period": 11,
+  "loop_diff": 0.0129,
+  "start": 15
+ },
+ "game": {
+  "title": "KNUDDEL-ALARM (Daybun)",
+  "animation": "vid_baron",
+  "clip": "dizzy",
+  "ticks_per_frame": 8,
+  "postprocess": "frames aligned to one foot point and cropped to their common hull (engine export)"
+ },
+ "palette_from": "base"
+}

@@ -1,13 +1,25 @@
 # pixel-video-sprites
 
 **Pixel-perfect sprite animations from a video model.** One native sprite plus one sentence of text in, a finished
-32 px animation out – running, flying, drinking, exploding – driven through your own ComfyUI.
+pixel animation out – walking, transforming, attacking, wobbling – driven through your own ComfyUI.
 
-| Bunny runs | Drunk drinks | Vulture flies | Beetle explodes |
+Examples from our platformer **KNUDDEL-ALARM**, made from the existing game sprites and used as game assets:
+
+| Jelly gets cured | Storm cloud gets cured | Grumpy bear stomps | Storm cloud strikes | Boss wobbles (64×80) |
+|---|---|---|---|---|
+| ![](examples/knuddel-jelly-cure/preview.gif) | ![](examples/knuddel-cloud-cure/preview.gif) | ![](examples/knuddel-bear-walk/preview.gif) | ![](examples/knuddel-cloud-attack/preview.gif) | ![](examples/knuddel-baron-dizzy/preview.gif) |
+| one-shot, 8 frames | one-shot, 6 frames | loop, 6 frames | one-shot, 8 frames | loop, 6 frames |
+
+Each example folder holds the input sprite (`input.png`), the frames as they sit in the game (`frames/`, aligned to one
+foot point), a `spritesheet.png`, the `preview.gif` and the exact settings (`recipe.json`). Nothing was touched up by hand.
+
+Early probe animations (the first tests of the chain):
+
+| Drunk drinks | Vulture flies | Beetle explodes | Bunny runs (weak) |
 |---|---|---|---|
-| ![](examples/bunny-run/preview.gif) | ![](examples/drunk-drinks/preview.gif) | ![](examples/vulture-flies/preview.gif) | ![](examples/beetle-explodes/preview.gif) |
+| ![](examples/drunk-drinks/preview.gif) | ![](examples/vulture-flies/preview.gif) | ![](examples/beetle-explodes/preview.gif) | ![](examples/bunny-run/preview.gif) |
 
-All four are fully automatic, each from one still image (`examples/*/input.png`) and one action written as text.
+The bunny run is kept as an early experiment only: its start image was already weak (ears and scarf hardly readable).
 
 [Deutsch: README.de.md](README.de.md)
 
@@ -73,19 +85,39 @@ ComfyUI sits behind a reverse proxy with auth, set `COMFY_AUTH` to `Bearer <toke
 ## Usage
 
 ```bash
-pvs animate examples/bunny-run/input.png \
-  --action "runs fast like a classic 2D platformer run cycle: big energetic strides, one leg kicks far forward while the other pushes far back, ears and scarf bounce, the body bobs up and down, running in place" \
-  --description "a cute white chibi bunny with long ears with pink insides and a hot pink scarf" \
-  --mode loop --out out/bunny-run
+pvs animate examples/knuddel-bear-walk/input.png --view "side view facing left" \
+  --action "stomps forward grumpily, swinging his short arms, the body bobbing heavily with each step, walking on the spot like on a treadmill" \
+  --description "a small grumpy pink gummy bear with a dark plum outline and an angry frown" \
+  --mode loop --frames 6 --stabilize scale --out out/bear-walk
 ```
 
-Output in `out/bunny-run/`: `frames/frame_XX.png` (native size, transparent), `spritesheet.png`, `preview.gif`,
+Output in `out/bear-walk/`: `frames/frame_XX.png` (native size, transparent), `spritesheet.png`, `preview.gif`,
 `meta.json` (picked video frames, cycle, settings, timings), plus the intermediate `start.png`, `video/`, `canvas/`, `krea/`.
 
 The other examples:
 
 ```bash
-# one-shot action, a little air around the sprite
+# transformation: one-shot, wide margin, only the video frames where the change happens
+pvs animate examples/knuddel-jelly-cure/input.png --mode once --margin 8 --no-hold --canvas 24 \
+  --view "three-quarter view facing left" --pick 1,2,3,5,7,9,10,11 \
+  --description "a grumpy green jelly blob with a shiny highlight, rosy cheeks and an angry little face, dark plum outline" \
+  --action "is hit by a burst of pink hearts, spins once, the angry face melts into a happy blushing smile with closed happy eyes and little pink hearts pop around it" \
+  --out out/jelly-cure
+
+# attack: sprite palette plus two darker greys, so the cloud keeps its pink cheeks
+pvs animate examples/knuddel-cloud-attack/input.png --mode once --margin 6 --no-hold --canvas 24 --seed 5 \
+  --view "front view" --pick 4,10,14,18,21,23,25,27 --palette base --extra-colors "96,102,128;128,136,160;255,250,200" \
+  --description "a grumpy grey storm cloud with an angry face, rosy cheeks and a small yellow lightning bolt hanging below" \
+  --action "gets angry, turns dark grey and shakes, then shoots a big bright yellow zigzag lightning bolt straight down with a white flash" \
+  --out out/cloud-attack
+
+# a 64x80 boss: bigger canvas, k2-pixel64 (cell 16)
+pvs animate examples/knuddel-baron-dizzy/input.png --canvas 80 --cell 16 --side 480 --seed 5 --frames 6 --view "front view" \
+  --description "Baron von Grummelkraut, a big muscular broccoli boss with a dark green crown of florets, a black top hat with a pink band, a golden monocle and a grumpy frown" \
+  --action "is dizzy and wobbles like a roly-poly toy, leaning far to the left and then far to the right, the top hat tilting, stars circling around his head" \
+  --out out/baron-dizzy
+
+# early probes: one-shot action, a little air around the sprite
 pvs animate examples/drunk-drinks/input.png --mode once --margin 2 \
   --description "a scruffy drunk old man with a red nose, stubble, brown coat and blue trousers, sitting on the ground" \
   --action "stays sitting on the ground, slowly lifts the green glass bottle to his mouth, takes a long drink, lowers the bottle again and sways sleepily" \
@@ -119,7 +151,11 @@ make a few and pick one.
 | `--length` | 33 | video frames (4n+1, e.g. 33 or 49) |
 | `--side` / `--steps` | 384 / 8 | video resolution and Wan steps (half of them on the high-noise stage with CFG 3.5) |
 | `--cell 32\|16` | 32 | Krea cell size: 32 = best look; 16 = k2-pixel64 on a quarter of the pixels, faster but crumbs on effects |
-| `--view` | `side view facing right` | must match your sprite |
+| `--view` | `side view facing right` | must match your sprite (`side view facing left`, `front view`, …) |
+| `--canvas` | 32 / 64 | canvas edge in sprite pixels (32 up to 30 px, else 64); `80` with `--cell 16` for a 64×80 boss |
+| `--stabilize pos\|scale` | off | calm the picked video frames before the re-draw: foot line and body centre (`pos`), plus height back to the sprite height (`scale`, against Wan zooming on hops) |
+| `--pick 1,2,5,…` | auto | your own choice of video frames, e.g. only the part of a one-shot clip where the action happens |
+| `--palette base\|video`, `--extra-colors "r,g,b;…"` | base (video with `--no-hold`) | palette source; extra colours for `base`, e.g. darker greys for a cloud that darkens |
 | `--wan KEY=VALUE`, `--krea KEY=VALUE` | | override any template parameter (model file names, `shift`, `hi_cfg`, `lora_dir`, …) |
 
 ### Python
@@ -158,7 +194,7 @@ Video = compute time on the server; pixel = wall time incl. upload/download; tot
 
 ## Limits
 
-* Native sprites up to 64 px; the view (e.g. side view) must already be right in the input.
+* Tuned for native sprites up to 64 px; bigger ones (a 64×80 boss) work with `--canvas 80 --cell 16`. The view (e.g. side view) must already be right in the input.
 * Describe the character precisely (colours, clothes), otherwise Krea "corrects" it.
 * Not every seed works – generate a few variants and pick one.
 * Small wobbles remain (ear shapes, dark lumps on fast wing strokes).

@@ -1,0 +1,40 @@
+{
+ "action": "stomps forward grumpily, swinging his short arms, the body bobbing heavily with each step, walking on the spot like on a treadmill",
+ "description": "a small grumpy pink gummy bear with a dark plum outline and an angry frown",
+ "view": "side view facing left",
+ "mode": "loop",
+ "frames": 6,
+ "margin": 0,
+ "hold": true,
+ "seed": 3,
+ "length": 33,
+ "side": 384,
+ "steps": 8,
+ "canvas": 32,
+ "cell": 32,
+ "denoise": 0.4,
+ "stabilize": "scale",
+ "key": "blue",
+ "grid": 32,
+ "picked": [
+  14,
+  16,
+  17,
+  18,
+  20,
+  22
+ ],
+ "cycle": {
+  "period": 9,
+  "loop_diff": 0.0176,
+  "start": 14
+ },
+ "game": {
+  "title": "KNUDDEL-ALARM (Daybun)",
+  "animation": "vid_bear",
+  "clip": "walk",
+  "ticks_per_frame": 6,
+  "postprocess": "frames aligned to one foot point and cropped to their common hull (engine export)"
+ },
+ "palette_from": "base"
+}

@@ -1,0 +1,48 @@
+{
+ "action": "is hit by a burst of pink hearts, the angry face melts into a happy blushing smile with closed happy eyes, the dark cloud turns soft and white and little pink hearts pop around it",
+ "description": "a grumpy grey storm cloud with an angry face, rosy cheeks and a small yellow lightning bolt hanging below",
+ "view": "front view",
+ "mode": "once",
+ "frames": 6,
+ "margin": 8,
+ "hold": false,
+ "seed": 3,
+ "length": 33,
+ "side": 384,
+ "steps": 8,
+ "canvas": 24,
+ "cell": 32,
+ "denoise": 0.4,
+ "key": "green",
+ "grid": 40,
+ "picked": [
+  2,
+  6,
+  11,
+  15,
+  19,
+  23,
+  28,
+  32
+ ],
+ "cycle": {
+  "period": null,
+  "last_visible": 32
+ },
+ "game": {
+  "title": "KNUDDEL-ALARM (Daybun)",
+  "animation": "vid_cloud",
+  "clip": "cure",
+  "ticks_per_frame": 5,
+  "postprocess": "frames aligned to one foot point and cropped to their common hull (engine export)"
+ },
+ "palette_from": "video",
+ "frames_used": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5
+ ]
+}

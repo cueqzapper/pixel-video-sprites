@@ -1,0 +1,41 @@
+{
+ "action": "is hit by a burst of pink hearts, spins once, the angry face melts into a happy blushing smile with closed happy eyes and little pink hearts pop around it",
+ "description": "a grumpy green jelly blob with a shiny highlight, rosy cheeks and an angry little face, dark plum outline",
+ "view": "three-quarter view facing left",
+ "mode": "once",
+ "frames": 8,
+ "margin": 8,
+ "hold": false,
+ "seed": 3,
+ "length": 33,
+ "side": 384,
+ "steps": 8,
+ "canvas": 24,
+ "cell": 32,
+ "denoise": 0.4,
+ "key": "blue",
+ "grid": 40,
+ "picked": [
+  1,
+  2,
+  3,
+  5,
+  7,
+  9,
+  10,
+  11
+ ],
+ "cycle": {
+  "period": null,
+  "last_visible": 32
+ },
+ "game": {
+  "title": "KNUDDEL-ALARM (Daybun)",
+  "animation": "vid_jelly",
+  "clip": "cure",
+  "ticks_per_frame": 5,
+  "postprocess": "frames aligned to one foot point and cropped to their common hull (engine export)"
+ },
+ "palette_from": "video",
+ "picked_by_hand": true
+}

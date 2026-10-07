@@ -154,11 +154,57 @@ def save_gif(frames: list[np.ndarray], path: Path, fps: int = 10, target: int = 
     imgs[0].save(path, "GIF", save_all=True, append_images=imgs[1:], duration=int(1000 / fps), loop=0, disposal=1)
 
 
+def stabilize_frames(paths, out_dir: Path, scale: bool = True, max_scale: float = 0.35, target_h: float | None = None) -> list[str]:
+    """Calm the picked video frames BEFORE the pixel re-draw, at video resolution (no pixel loss): foot line to the median
+    foot line, upper-body centre to the image centre, optionally the character height to `target_h` (Wan tends to zoom
+    towards the camera when a character hops, and the sprite would pump by 3-4 px)."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    ims = [np.asarray(Image.open(p).convert("RGB")) for p in paths]
+    boxes = []
+    for a in ims:
+        m = key_mask(a)
+        ys, xs = np.where(m)
+        if not len(ys):
+            boxes.append(None)
+            continue
+        y0, y1 = ys.min(), ys.max()
+        up = m[y0:y0 + max(1, int((y1 - y0 + 1) * 0.6))]
+        boxes.append((xs.min(), y0, xs.max() + 1, y1 + 1, float(np.where(up)[1].mean())))
+    ok = [b for b in boxes if b]
+    if not ok:
+        return [str(p) for p in paths]
+    hmed = float(target_h or np.median([b[3] - b[1] for b in ok]))
+    base = int(np.median([b[3] for b in ok]))
+    res = []
+    for k, (a, b) in enumerate(zip(ims, boxes)):
+        dst = out_dir / f"s_{k:02d}.png"
+        if b is None:
+            Image.fromarray(a).save(dst)
+            res.append(str(dst))
+            continue
+        H, W = a.shape[:2]
+        ring = np.concatenate([a[0], a[-1], a[:, 0], a[:, -1]])
+        bg = tuple(int(v) for v in np.median(ring, 0))
+        f = float(np.clip(hmed / (b[3] - b[1]), 1 - max_scale, 1 + max_scale)) if scale else 1.0
+        pad = 6
+        x0, y0, x1, y1 = max(0, b[0] - pad), max(0, b[1] - pad), min(W, b[2] + pad), min(H, b[3] + pad)
+        crop = Image.fromarray(a[y0:y1, x0:x1])
+        mk = Image.fromarray((key_mask(a)[y0:y1, x0:x1] * 255).astype(np.uint8))
+        nw, nh = max(1, round(crop.width * f)), max(1, round(crop.height * f))
+        crop, mk = crop.resize((nw, nh), Image.LANCZOS), mk.resize((nw, nh), Image.LANCZOS)
+        out = Image.new("RGB", (W, H), bg)
+        out.paste(crop, (round(W / 2 - (b[4] - x0) * f), round(base - (b[3] - y0) * f)), mk)
+        out.save(dst)
+        res.append(str(dst))
+    return res
+
+
 # ------------------------------------------------------------------------------------------------- the pipeline
 def animate(sprite: str | Path, action: str, description: str, out_dir: str | Path, *, mode: str = "loop", n: int = 12,
             seed: int = 3, length: int = 33, denoise: float = 0.4, view: str = "side view facing right", margin: int = 0,
             hold: bool = True, side: int = 384, steps: int = 8, cell: int = 32, fps: int = 10,
-            client: comfy.ComfyClient | None = None, wan_params: dict | None = None, krea_params: dict | None = None,
+            canvas: int | None = None, stabilize: str | None = None, picked: list[int] | None = None,
+            palette: str | None = None, extra_colors: list | None = None, client: comfy.ComfyClient | None = None, wan_params: dict | None = None, krea_params: dict | None = None,
             verbose: bool = True) -> dict:
     """Any animation for an existing sprite.
 
@@ -171,6 +217,14 @@ def animate(sprite: str | Path, action: str, description: str, out_dir: str | Pa
                  False = camera follows, palette taken from the video (fire, smoke)
     side/steps:  video resolution (multiple of 16) and Wan steps (half with real CFG on the high-noise stage)
     cell:        Krea cell size: 32 = k2-pixel32 at grid*32 px (best look), 16 = k2-pixel64 at grid*16 px (faster)
+    canvas:      canvas edge in sprite pixels (default: 32 for sprites up to 30 px, else 64); e.g. 40 for a 24x32 hero,
+                 80 for a 64x80 boss (use cell=16 there)
+    stabilize:   None | 'pos' | 'scale' – calm the picked video frames before the re-draw: foot line and body centre
+                 ('pos'), plus character height back to the sprite height ('scale', against Wan zooming on hops)
+    picked:      your own choice of video frames (indices into the clip) instead of the automatic pick, e.g. only the
+                 part of a one-shot clip where the action happens
+    palette:     'base' (sprite colours) or 'video' (colours of the picked frames); default: base with hold, else video
+    extra_colors: extra [r, g, b] colours for palette='base' (e.g. darker greys for a cloud that darkens)
     """
     client = client or comfy.ComfyClient()
     d = Path(out_dir)
@@ -181,9 +235,10 @@ def animate(sprite: str | Path, action: str, description: str, out_dir: str | Pa
     if bb is None:
         raise ValueError("sprite is fully transparent")
     size = max(bb[3] - bb[1], bb[2] - bb[0])
-    if size > 64:
-        raise ValueError(f"sprite is {size} px; this pipeline is tuned for native sprites up to 64 px")
-    canvas = 32 if size <= 30 else 64
+    if canvas is None:
+        if size > 64:
+            raise ValueError(f"sprite is {size} px; pass canvas= (e.g. 80) for sprites above 64 px")
+        canvas = 32 if size <= 30 else 64
     grid = canvas + 2 * margin
     lora = 32 if (cell == 32 and grid <= 48) else 64
     key = choose_key(base)
@@ -209,9 +264,24 @@ def animate(sprite: str | Path, action: str, description: str, out_dir: str | Pa
     else:
         areas = [float(key_mask(np.asarray(Image.open(p).convert("RGB").resize((64, 64), Image.BOX))).mean()) for p in paths]
         idx, info = pick_once(areas, n=n)
+    if picked:
+        if max(picked) >= len(paths) or min(picked) < 0:
+            raise ValueError(f"picked frames must be 0..{len(paths) - 1}")
+        idx, info = [int(i) for i in picked], dict(info, picked_by_hand=True)
+    if stabilize:
+        th = (bb[3] - bb[1]) * side / grid  # sprite height in video pixels (start image: nearest side/grid)
+        calm = stabilize_frames([paths[i] for i in idx], d / "stab", scale=(stabilize == "scale"), target_h=th)
+        paths = list(paths)
+        for i, q in zip(idx, calm):
+            paths[i] = q
 
     # 4) Krea re-draw, 6 frames per job, one shared palette
-    cols = base[base[..., 3] >= 128][:, :3] if hold else video_palette([paths[i] for i in idx], grid, n=24)
+    if (palette or ("base" if hold else "video")) == "base":
+        cols = base[base[..., 3] >= 128][:, :3]
+        if extra_colors:
+            cols = np.concatenate([cols, np.array(extra_colors, np.uint8).reshape(-1, 3)])
+    else:
+        cols = video_palette([paths[i] for i in idx], grid, n=24)
     pal = np.unique(np.concatenate([cols, np.array([KEYS[key]], np.uint8)]), axis=0)
     pp = d / "palette.png"
     Image.fromarray(pal.reshape(1, -1, 3).astype(np.uint8)).save(pp)
@@ -250,7 +320,8 @@ def animate(sprite: str | Path, action: str, description: str, out_dir: str | Pa
     save_gif(frames, d / "preview.gif", fps=fps)
     meta = {"action": action, "description": description, "mode": mode, "key": key, "grid": grid, "lora": f"k2-pixel{lora}",
             "video_frames": len(paths), "picked": idx, "cycle": info, "hold": hold, "margin": margin, "seed": seed,
-            "length": length, "side": side, "steps": steps, "denoise": denoise, "frames": files,
+            "length": length, "side": side, "steps": steps, "denoise": denoise, "canvas": canvas, "stabilize": stabilize,
+            "view": view, "frames": files,
             "spritesheet": str(d / "spritesheet.png"), "gif": str(d / "preview.gif"),
             "timing": {"wan_s": round(T["wan"] - T["t0"], 1), "krea_s": round(T["krea"] - T["wan"], 1),
                        "total_s": round(T["krea"] - T["t0"], 1)}}
