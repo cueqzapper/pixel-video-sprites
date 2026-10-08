@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pixel-video-sprites"
-version = "0.1.0"
+version = "0.2.0"
 description = "Pixel-perfect sprite animations from a video model: Wan 2.2 motion + Krea 2 pixel re-draw, driven through ComfyUI"
 readme = "README.md"
 license = "MIT"

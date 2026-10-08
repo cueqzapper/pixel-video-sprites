@@ -169,13 +169,35 @@ meta = animate("hero.png", action="jumps high and lands", description="a small k
 print(meta["spritesheet"], meta["timing"])
 ```
 
+## Still images: scenes and sprites
+
+The same models also make still pixel art. Krea 2 paints the picture, the MiniMax H3 refiner collapses it to the exact
+grid, so one art pixel is exactly one output pixel:
+
+```bash
+# a 384x216 scene, 32 colours (rendered at 4 px per art pixel, no LoRA)
+pvs scene "a fairytale castle with red roof towers above a mountain lake at sunset, pine forests" --out out/castle.png
+# a 64x64 sprite with transparent background (k2-pixel64; <= 32 px uses k2-pixel32)
+pvs sprite "a small red dragon with an orange belly, full body, side view facing right" --size 64 --out out/dragon.png
+# a 32x32 icon
+pvs sprite "a round glass bottle with glowing red health potion" --size 32 --colors 12 --item --out out/potion.png
+```
+
+Write only the subject, without style words – the style prompt is added for you. Sprites come on white; the white
+background connected to the border is keyed out (hard alpha). Feed a sprite straight into `pvs animate`. If your LoRAs
+live in a subfolder, add `--krea lora_dir=krea2/`. About 20 s per scene and 10 s per sprite on an RTX 4090.
+
+More examples, made with the same models and recipes: [daybun.com/pixel-engine](https://daybun.com/pixel-engine/).
+
 ## Workflows
 
-The two ComfyUI workflows are in [`pixel_video_sprites/workflows/`](pixel_video_sprites/workflows/):
+The three ComfyUI workflows are in [`pixel_video_sprites/workflows/`](pixel_video_sprites/workflows/):
 
 * `wan22_i2v_motion.json` – Wan 2.2 I2V A14B, two `KSamplerAdvanced` stages (high noise without lightx2v, low noise with it).
 * `krea2_pixel_img2img_batch6.json` – Krea 2 Turbo + k2-pixel img2img as six parallel sampler branches in one job,
   followed by the MiniMax H3 refiner with a shared palette image.
+* `krea2_pixel_t2i.json` – Krea 2 Turbo text-to-image (optionally with a k2-pixel LoRA) and the MiniMax H3 refiner
+  to an exact grid; used by `pvs scene` and `pvs sprite`.
 
 They are ComfyUI **API-format** workflows with `{{placeholders}}` and a `_template` block listing every parameter and
 its default. The CLI fills them; to load one in the ComfyUI editor, replace the placeholders with values first.

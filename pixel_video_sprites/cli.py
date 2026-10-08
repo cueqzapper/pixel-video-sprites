@@ -1,4 +1,7 @@
-"""Command line: `pvs animate …`, `pvs check`.
+"""Command line: `pvs animate …`, `pvs scene …`, `pvs sprite …`, `pvs check`.
+
+  pvs scene "a fairytale castle above a mountain lake at sunset" --size 384x216 --out out/castle.png
+  pvs sprite "a heroic knight in silver armor with a blue cape, full body, side view facing right" --size 64 --out out/knight.png
 
   pvs check --url http://127.0.0.1:8188
   pvs animate examples/knuddel-bear-walk/input.png --view "side view facing left" \
@@ -13,6 +16,7 @@ import json
 import sys
 
 from . import comfy
+from . import images
 from .pipeline import KREA_BATCH, WAN, animate
 
 NODES = {"UnetLoaderGGUF": "ComfyUI-GGUF (github.com/city96/ComfyUI-GGUF)",
@@ -115,9 +119,35 @@ def main(argv=None):
     a.add_argument("--wan", action="append", metavar="KEY=VALUE", help="override a Wan template parameter (e.g. wan_high=my.gguf)")
     a.add_argument("--krea", action="append", metavar="KEY=VALUE", help="override a Krea template parameter")
     a.add_argument("--quiet", action="store_true")
+    sc = sub.add_parser("scene", help="a pixel art scene (default 384x216 native pixels)")
+    sc.add_argument("subject", help="what to show, in English, without style words")
+    sc.add_argument("--out", required=True, help="output PNG")
+    sc.add_argument("--size", default="384x216", help="WxH in art pixels (rendered at 4 px per art pixel)")
+    sc.add_argument("--colors", type=int, default=32)
+    sp = sub.add_parser("sprite", help="a sprite or item with transparent background (16-64 px)")
+    sp.add_argument("subject", help="the character or object, precisely, in English")
+    sp.add_argument("--out", required=True, help="output PNG")
+    sp.add_argument("--size", type=int, default=64, help="edge in art pixels (<= 32 uses k2-pixel32, else k2-pixel64)")
+    sp.add_argument("--colors", type=int, default=16)
+    sp.add_argument("--item", action="store_true", help="icon trigger instead of sprite trigger")
+    for x in (sc, sp):
+        x.add_argument("--seed", type=int, default=1)
+        x.add_argument("--krea", action="append", metavar="KEY=VALUE", help="override a template parameter (e.g. lora_dir=krea2/)")
+        x.add_argument("--quiet", action="store_true")
     args = ap.parse_args(argv)
     if args.cmd == "check":
         sys.exit(check(args.url))
+    if args.cmd in ("scene", "sprite"):
+        c = comfy.ComfyClient(args.url)
+        if args.cmd == "scene":
+            w, h = (int(v) for v in args.size.lower().split("x"))
+            meta = images.scene(args.subject, args.out, size=(w, h), seed=args.seed, colors=args.colors, client=c,
+                                extra=_kv(args.krea), verbose=not args.quiet)
+        else:
+            meta = images.sprite(args.subject, args.out, size=args.size, seed=args.seed, colors=args.colors, item=args.item,
+                                 client=c, extra=_kv(args.krea), verbose=not args.quiet)
+        print(json.dumps(meta, indent=1, ensure_ascii=False))
+        return
     meta = animate(args.sprite, args.action, args.description, args.out, mode=args.mode, n=args.frames, seed=args.seed,
                    length=args.length, denoise=args.denoise, view=args.view, margin=args.margin, hold=not args.no_hold,
                    side=args.side, steps=args.steps, cell=args.cell, fps=args.fps, canvas=args.canvas,

@@ -121,9 +121,31 @@ machen und eine auswählen.
 | `--palette base\|video`, `--extra-colors "r,g,b;…"` | base (video bei `--no-hold`) | Herkunft der Palette; Zusatzfarben für `base`, z. B. dunklere Grautöne für eine Wolke, die sich verdunkelt |
 | `--wan KEY=WERT`, `--krea KEY=WERT` | | beliebigen Vorlagen-Parameter überschreiben (Modell-Dateinamen, `shift`, `hi_cfg`, `lora_dir`, …) |
 
+## Standbilder: Szenen und Sprites
+
+Dieselben Modelle machen auch Standbilder in Pixel-Art. Krea 2 malt das Bild, der MiniMax-H3-Refiner zwingt es auf das
+exakte Raster, sodass ein Kunstpixel genau ein Ausgabepixel ist:
+
+```bash
+# eine Szene in 384 × 216, 32 Farben (gerendert mit 4 px je Kunstpixel, ohne LoRA)
+pvs scene "a fairytale castle with red roof towers above a mountain lake at sunset, pine forests" --out out/castle.png
+# ein 64-×-64-Sprite mit transparentem Hintergrund (k2-pixel64; bis 32 px k2-pixel32)
+pvs sprite "a small red dragon with an orange belly, full body, side view facing right" --size 64 --out out/dragon.png
+# ein Icon in 32 × 32
+pvs sprite "a round glass bottle with glowing red health potion" --size 32 --colors 12 --item --out out/potion.png
+```
+
+Nur das Motiv beschreiben, ohne Stilwörter – den Stil-Prompt setzt das Werkzeug davor. Sprites entstehen auf Weiss;
+der zum Rand verbundene weisse Hintergrund wird freigestellt (hartes Alpha). Ein Sprite kann direkt in `pvs animate`.
+Liegen die LoRAs in einem Unterordner, `--krea lora_dir=krea2/` anhängen. Etwa 20 s pro Szene und 10 s pro Sprite auf
+einer RTX 4090.
+
+Weitere Beispiele, mit denselben Modellen und Rezepten erzeugt: [daybun.com/de/pixel-engine](https://daybun.com/de/pixel-engine/).
+
 ## Workflows
 
-Die zwei ComfyUI-Workflows liegen in [`pixel_video_sprites/workflows/`](pixel_video_sprites/workflows/). Es sind
+Die drei ComfyUI-Workflows (`wan22_i2v_motion.json`, `krea2_pixel_img2img_batch6.json`, `krea2_pixel_t2i.json` für
+Szenen und Sprites) liegen in [`pixel_video_sprites/workflows/`](pixel_video_sprites/workflows/). Es sind
 Workflows im ComfyUI-**API-Format** mit `{{Platzhaltern}}` und einem `_template`-Block, der jeden Parameter mit
 Standardwert auflistet. Das Werkzeug füllt sie aus. Um einen im ComfyUI-Editor zu laden, zuerst die Platzhalter durch
 Werte ersetzen.
